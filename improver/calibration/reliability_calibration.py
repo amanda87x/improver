@@ -611,11 +611,14 @@ class ManipulateReliabilityTable(BasePlugin):
     constant observation frequency.
     """
 
-    def __init__(self, minimum_forecast_count: int = 200) -> None:
+    def __init__(self, point_by_point: bool, minimum_forecast_count: int = 200) -> None:
         """
         Initialise class for manipulating a reliability table.
 
         Args:
+            point_by_point:
+                Whether to process each point in the reliability table
+                independently.
             minimum_forecast_count:
                 The minimum number of forecast counts in a forecast probability
                 bin for it to be used in calibration.
@@ -629,12 +632,12 @@ class ManipulateReliabilityTable(BasePlugin):
             preserving spatial structure. Tellus, Ser. A Dyn. Meteorol.
             Oceanogr. 66.
         """
+        self.point_by_point = point_by_point
         if minimum_forecast_count < 1:
             raise ValueError(
                 "The minimum_forecast_count must be at least 1 as empty "
                 "bins in the reliability table are not handled."
             )
-
         self.minimum_forecast_count = minimum_forecast_count
 
     @staticmethod
@@ -993,7 +996,7 @@ class ManipulateReliabilityTable(BasePlugin):
             )
         return rel_table_slice
 
-    def process(self, reliability_table: Cube, point_by_point: bool) -> CubeList:
+    def process(self, reliability_table: Cube) -> CubeList:
         """
         Apply the steps needed to produce a reliability diagram with a
         monotonic observation frequency.
@@ -1004,8 +1007,6 @@ class ManipulateReliabilityTable(BasePlugin):
                 expected on this cube are a threshold coordinate,
                 a table_row_index coordinate and corresponding table_row_name
                 coordinate and a probability_bin coordinate.
-            point_by_point:
-                Whether to process each point in the input cube independently.
 
         Returns:
             CubeList containing a reliability table cube for each threshold in

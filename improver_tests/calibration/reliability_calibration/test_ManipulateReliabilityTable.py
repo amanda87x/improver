@@ -57,13 +57,13 @@ class Test_setup(unittest.TestCase):
         self.forecast = set_up_probability_cube(
             np.ones((1, 3, 3), dtype=np.float32), thresholds
         )
-        reliability_cube_format = CalPlugin()._create_reliability_table_cube(
+        reliability_cube_point_format = CalPlugin()._create_reliability_table_cube(
             self.forecast, self.forecast.coord(var_name="threshold")
         )
-        reliability_cube_format = reliability_cube_format.collapsed(
+        reliability_cube_agg_format = reliability_cube_point_format.collapsed(
             [
-                reliability_cube_format.coord(axis="x"),
-                reliability_cube_format.coord(axis="y"),
+                reliability_cube_point_format.coord(axis="x"),
+                reliability_cube_point_format.coord(axis="y"),
             ],
             iris.analysis.SUM,
         )
@@ -76,8 +76,12 @@ class Test_setup(unittest.TestCase):
         reliability_data_0 = np.stack(
             [self.obs_count, self.forecast_probability_sum, self.forecast_count]
         )
-        self.reliability_table = reliability_cube_format.copy(data=reliability_data_0)
-        self.probability_bin_coord = self.reliability_table.coord("probability_bin")
+        reliability_data_point = np.stack(
+            [np.stack([reliability_data_0] * 3, axis=-1)] * 3, axis=-1
+        )
+        self.reliability_table_agg = reliability_cube_agg_format.copy(data=reliability_data_0)
+        self.reliability_table_point = reliability_cube_point_format.copy(data=reliability_data_point)
+        self.probability_bin_coord = self.reliability_table_agg.coord("probability_bin")
 
         # Set up a reliablity table cube with two thresholds
         reliability_data_1 = np.array(
@@ -88,12 +92,12 @@ class Test_setup(unittest.TestCase):
             ],
             dtype=np.float32,
         )
-        reliability_table_1 = self.reliability_table.copy(data=reliability_data_1)
-        reliability_table_1.coord("air_temperature").points = np.array(
+        reliability_table_agg_1 = self.reliability_table_agg.copy(data=reliability_data_1)
+        reliability_table_agg_1.coord("air_temperature").points = np.array(
             278.0, dtype=np.float32
         )
         self.multi_threshold_rt = iris.cube.CubeList(
-            [self.reliability_table, reliability_table_1]
+            [self.reliability_table_agg, reliability_table_agg_1]
         ).merge_cube()
         # Set up expected resulting reliablity table data for Test__combine_bin_pair
         self.expected_enforced_monotonic = np.array(
@@ -490,6 +494,8 @@ class Test__assume_constant_observation_frequency(Test_setup):
 class Test_process(Test_setup):
 
     """Test the process method."""
+    def test_aa(self):
+        print('end')
 
     def test_no_change(self):
         """Test with no changes required to preserve monotonicity"""
