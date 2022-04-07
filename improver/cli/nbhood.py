@@ -42,12 +42,13 @@ def process(
     mask: cli.inputcube = None,
     *,
     neighbourhood_output,
-    neighbourhood_shape="square",
+    neighbourhood_shape,
     radii: cli.comma_separated_list,
     lead_times: cli.comma_separated_list = None,
     degrees_as_complex=False,
     weighted_mode=False,
     area_sum=False,
+    remask=False,
     percentiles: cli.comma_separated_list = DEFAULT_PERCENTILES,
     halo_radius: float = None,
 ):
@@ -62,7 +63,7 @@ def process(
         mask (iris.cube.Cube):
             A cube to mask the input cube. The data should contain 1 for
             usable points and 0 for discarded points.
-            Can't be used with "percentiles" as neighbourhood_output (Optional)
+            Only supported with square neighbourhoods. (Optional)
         neighbourhood_output (str):
             The form of the results generated using neighbourhood processing.
             If "probabilities" is selected, the mean probability with a
@@ -76,7 +77,6 @@ def process(
             neighbourhood shape is applicable for calculating "percentiles"
             output.
             Options: "circular", "square".
-            Default: "square".
         radii (list of float):
             The radius or a list of radii in metres of the neighbourhood to
             apply.
@@ -97,6 +97,12 @@ def process(
             neighbourhood output using the circular kernel.
         area_sum (bool):
             Return sum rather than fraction over the neighbourhood area.
+        remask (bool):
+            Include this option to apply the original un-neighbourhood
+            processed mask to the neighbourhood processed cube.
+            Otherwise the original un-neighbourhood processed mask
+            is not applied. Therefore, the neighbourhood processing may result
+            in values being present in area that were originally masked.
         percentiles (float):
             Calculates value at the specified percentiles from the
             neighbourhood surrounding each grid point. This argument has no
@@ -128,6 +134,8 @@ def process(
     from improver.utilities.pad_spatial import remove_cube_halo
     from improver.wind_calculations.wind_direction import WindDirection
 
+    sum_or_fraction = "sum" if area_sum else "fraction"
+
     if neighbourhood_output == "percentiles":
         if weighted_mode:
             raise RuntimeError(
@@ -154,12 +162,15 @@ def process(
             radius_or_radii,
             lead_times=lead_times,
             weighted_mode=weighted_mode,
-            sum_only=area_sum,
-            re_mask=True,
+            sum_or_fraction=sum_or_fraction,
+            re_mask=remask,
         )(cube, mask_cube=mask)
     elif neighbourhood_output == "percentiles":
         result = GeneratePercentilesFromANeighbourhood(
-            radius_or_radii, lead_times=lead_times, percentiles=percentiles,
+            neighbourhood_shape,
+            radius_or_radii,
+            lead_times=lead_times,
+            percentiles=percentiles,
         )(cube)
 
     if degrees_as_complex:
