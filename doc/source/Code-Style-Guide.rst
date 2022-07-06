@@ -67,12 +67,13 @@ Code formatting
 In general, follow the very sensible `Google style
 guide <https://google.github.io/styleguide/pyguide.html>`_.
 
-Code format should match that produced by the
-`black <https://github.com/psf/black>`_ code formatter - this is
-checked as part of the test suite on Github Actions. Codacy will give
-you a mark based around ``pylint`` (with some caveats). A pylint score
-of >8 is OK, >9 is good - skip pylint-misled errors for e.g. numpy
-(e.g. with ``pylint --extension-pkg-whitelist=numpy``).
+* Code format should match that produced by the
+  `black <https://github.com/psf/black>`_ code formatter - this is
+  checked as part of the test suite on Github Actions. 
+* Codacy will give
+  you a mark based around ``pylint`` (with some caveats). A pylint score
+  of >8 is OK, >9 is good - skip pylint-misled errors for e.g. numpy
+  (e.g. with ``pylint --extension-pkg-whitelist=numpy``).
 
 Modular code
 ~~~~~~~~~~~~
